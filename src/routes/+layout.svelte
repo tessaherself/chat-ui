@@ -129,6 +129,29 @@
 	});
 
 	onMount(async () => {
+		// Iframe model switch bridge: parent app can send { type: "xp:switchModel", modelId }
+		async function handleParentMessage(event: MessageEvent) {
+			if (!event.data || event.data.type !== "xp:switchModel" || typeof event.data.modelId !== "string") {
+				return;
+			}
+			const { modelId } = event.data;
+			try {
+				await settings.instantSet({ activeModel: modelId });
+				if (page.url.pathname.includes("/conversation/")) {
+					await goto(`${base}/`, { invalidateAll: false });
+				}
+				if (event.source) {
+					(event.source as WindowProxy).postMessage(
+						{ type: "xp:switchModelAck", modelId },
+						event.origin || window.location.origin
+					);
+				}
+			} catch (err) {
+				console.error("Could not switch model from parent message", err);
+			}
+		}
+		window.addEventListener("message", handleParentMessage);
+
 		if (publicConfig.isHuggingChat && data.user?.username) {
 			fetch(`https://huggingface.co/api/users/${data.user.username}/overview`)
 				.then((res) => res.json())
@@ -182,7 +205,10 @@
 		};
 
 		window.addEventListener("keydown", onKeydown, { capture: true });
-		onDestroy(() => window.removeEventListener("keydown", onKeydown, { capture: true }));
+		onDestroy(() => {
+			window.removeEventListener("keydown", onKeydown, { capture: true });
+			window.removeEventListener("message", handleParentMessage);
+		});
 	});
 
 	let mobileNavTitle = $derived(
