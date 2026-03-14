@@ -130,15 +130,20 @@
 </script>
 
 <div
-	class="sticky top-0 flex flex-none touch-none items-center justify-between px-1.5 py-3.5 max-sm:pt-0"
+	class="sticky top-0 flex flex-none touch-none items-center justify-between px-1.5 max-sm:pt-0"
+	class:py-3.5={publicConfig.PUBLIC_SHOW_NAV_LOGO === "true"}
 >
-	<a
-		class="flex select-none items-center rounded-xl text-lg font-semibold"
-		href="{publicConfig.PUBLIC_ORIGIN}{base}/"
-	>
-		<Logo classNames="dark:invert mr-[2px]" />
-		{publicConfig.PUBLIC_APP_NAME}
-	</a>
+	{#if publicConfig.PUBLIC_SHOW_NAV_LOGO === "true"}
+		<a
+			class="flex select-none items-center rounded-xl text-lg font-semibold"
+			href="{publicConfig.PUBLIC_ORIGIN}{base}/"
+		>
+			<Logo classNames="dark:invert mr-[2px]" variant="nav" />
+			{publicConfig.PUBLIC_APP_NAV_NAME || publicConfig.PUBLIC_APP_NAME}
+		</a>
+	{:else}
+		<span></span>
+	{/if}
 	<a
 		href={`${base}/`}
 		onclick={handleNewChatClick}
