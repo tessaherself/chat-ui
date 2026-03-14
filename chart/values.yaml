@@ -9,8 +9,12 @@ replicas: 3
 domain: huggingface.co
 
 networkPolicy:
-  enabled: false
+  enabled: true
   allowedBlocks: []
+  allowFromNamespaces: []
+  allowFromPodLabels: {}
+  allowToMongoDB: true
+  mongoDBCIDR: "0.0.0.0/0"
 
 service:
   type: NodePort
