@@ -16,7 +16,12 @@
 		"updateLocalEnv": "vite-node --options.transformMode.ssr='/.*/' scripts/updateLocalEnv.ts",
 		"populate": "vite-node --options.transformMode.ssr='/.*/' scripts/populate.ts",
 		"config": "vite-node --options.transformMode.ssr='/.*/' scripts/config.ts",
-		"prepare": "husky"
+		"prepare": "husky",
+		"dev:xp": "node scripts/useEnv.mjs xp dev",
+		"dev:bkk": "node scripts/useEnv.mjs bkk dev",
+		"dev:select": "node scripts/selectProject.mjs",
+		"build:xp": "node scripts/useEnv.mjs xp build",
+		"build:bkk": "node scripts/useEnv.mjs bkk build"
 	},
 	"devDependencies": {
 		"@faker-js/faker": "^8.4.1",

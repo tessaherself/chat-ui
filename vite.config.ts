@@ -4,7 +4,13 @@ import { promises } from "fs";
 import { defineConfig } from "vitest/config";
 import { config } from "dotenv";
 
+// Load .env.local first (overrides), then .env as fallback
+// This ensures env vars are available before config is evaluated
 config({ path: "./.env.local" });
+config({ path: "./.env" });
+
+// Vite automatically loads .env.{mode} and .env.{mode}.local based on --mode flag
+// But we need to load them here first for vars used in vite.config.ts itself
 
 // used to load fonts server side for thumbnail generation
 function loadTTFAsArrayBuffer() {
@@ -33,7 +39,9 @@ export default defineConfig({
 		// Allow any ngrok-free.app subdomain (dynamic tunnels)
 		// See Vite server.allowedHosts: string[] | true
 		// Using leading dot matches subdomains per Vite's host check logic
-		allowedHosts: ["huggingface.ngrok.io"],
+		allowedHosts: process.env.VITE_ALLOWED_HOSTS
+			? process.env.VITE_ALLOWED_HOSTS.split(",").map((h) => h.trim())
+			: ["huggingface.ngrok.io"],
 	},
 	optimizeDeps: {
 		include: ["uuid", "sharp", "clsx"],
