@@ -520,7 +520,7 @@ export async function authenticateRequest(
 export async function triggerOauthFlow({ url, locals, cookies }: RequestEvent): Promise<Response> {
 	// const referer = request.headers.get("referer");
 	// let redirectURI = `${(referer ? new URL(referer) : url).origin}${base}/login/callback`;
-	let redirectURI = `${url.origin}${base}/login/callback`;
+	let redirectURI = `${config.PUBLIC_ORIGIN || url.origin}${base}/login/callback`;
 
 	// TODO: Handle errors if provider is not responding
 
