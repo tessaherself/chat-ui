@@ -9,6 +9,7 @@ import type { McpServerConfig } from "$lib/server/mcp/httpClient";
 import {
 	callMcpTool,
 	getMcpToolTimeoutMs,
+	readMcpResource,
 	type McpToolTextResponse,
 } from "$lib/server/mcp/httpClient";
 import { getClient } from "$lib/server/mcp/clientPool";
@@ -265,6 +266,18 @@ export async function* executeToolCalls({
 				{ server: mappingEntry.server, tool: mappingEntry.tool },
 				"[mcp] tool call completed"
 			);
+
+			// If the tool declares a UI resource (MCP Apps), fetch the HTML
+			let mcpAppHtml: string | undefined;
+			if (mappingEntry.uiResourceUri && serverCfg) {
+				const resource = await readMcpResource(serverCfg, mappingEntry.uiResourceUri, {
+					signal: abortSignal,
+				});
+				if (resource?.text) {
+					mcpAppHtml = resource.text;
+				}
+			}
+
 			results.push({
 				index,
 				output: annotated,
@@ -285,6 +298,7 @@ export async function* executeToolCalls({
 							text: annotated ?? "",
 							structured: toolResponse.structured,
 							content: toolResponse.content,
+							...(mcpAppHtml ? { mcpAppHtml } : {}),
 						} as unknown as Record<string, unknown>,
 					],
 					display: true,

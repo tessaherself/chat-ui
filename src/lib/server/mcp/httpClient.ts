@@ -1,6 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client";
 import { getClient, evictFromPool } from "./clientPool";
 import { config } from "$lib/server/config";
+import { logger } from "$lib/server/logger";
 
 function isConnectionClosedError(err: unknown): boolean {
 	const message = err instanceof Error ? err.message : String(err);
@@ -119,4 +120,33 @@ export async function callMcpTool(
 		? (response.content as unknown[])
 		: undefined;
 	return { text, structured, content: contentBlocks };
+}
+
+/**
+ * Read a resource from an MCP server (e.g. a ui:// resource for MCP Apps).
+ * Returns the resource text and mimeType, or null if the read fails.
+ */
+export async function readMcpResource(
+	server: McpServerConfig,
+	uri: string,
+	{ signal }: { signal?: AbortSignal } = {}
+): Promise<{ mimeType: string; text: string } | null> {
+	try {
+		const client = await getClient(server, signal);
+		const response = await client.readResource({ uri });
+		const contents = Array.isArray(response?.contents) ? response.contents : [];
+		for (const entry of contents) {
+			const obj = entry as Record<string, unknown>;
+			if (typeof obj["text"] === "string") {
+				return {
+					mimeType: typeof obj["mimeType"] === "string" ? obj["mimeType"] : "text/html",
+					text: obj["text"] as string,
+				};
+			}
+		}
+		return null;
+	} catch (err) {
+		logger.warn({ server: server.name, uri, err: String(err) }, "[mcp] failed to read resource");
+		return null;
+	}
 }

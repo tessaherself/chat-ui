@@ -13,6 +13,7 @@
 	import { page } from "$app/state";
 	import CarbonChevronRight from "~icons/carbon/chevron-right";
 	import BlockWrapper from "./BlockWrapper.svelte";
+	import McpAppFrame from "./McpAppFrame.svelte";
 
 	interface Props {
 		tool: MessageToolUpdate[];
@@ -83,9 +84,14 @@
 		return blocks.filter(isImageBlock);
 	};
 
+	const getMcpAppHtml = (output: ToolOutput): string | undefined => {
+		const html = output["mcpAppHtml"];
+		return typeof html === "string" ? html : undefined;
+	};
+
 	const getMetadataEntries = (output: ToolOutput): Array<[string, unknown]> => {
 		return Object.entries(output).filter(
-			([key, value]) => value != null && key !== "content" && key !== "text"
+			([key, value]) => value != null && key !== "content" && key !== "text" && key !== "mcpAppHtml"
 		);
 	};
 
@@ -93,6 +99,7 @@
 		text?: string;
 		images: McpImageContent[];
 		metadata: Array<[string, unknown]>;
+		mcpAppHtml?: string;
 	}
 
 	const parseToolOutputs = (outputs: ToolOutput[]): ParsedToolOutput[] =>
@@ -100,6 +107,7 @@
 			text: getOutputText(output),
 			images: getImageBlocks(output),
 			metadata: getMetadataEntries(output),
+			mcpAppHtml: getMcpAppHtml(output),
 		}));
 
 	// Icon styling based on state
@@ -240,6 +248,10 @@
 													/>
 												{/each}
 											</div>
+										{/if}
+
+										{#if parsedOutput.mcpAppHtml}
+											<McpAppFrame html={parsedOutput.mcpAppHtml} />
 										{/if}
 
 										{#if parsedOutput.metadata.length > 0}

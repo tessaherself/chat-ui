@@ -14,6 +14,7 @@ export interface McpToolMapping {
 	fnName: string;
 	server: string;
 	tool: string;
+	uiResourceUri?: string;
 }
 
 interface CacheEntry {
@@ -59,6 +60,7 @@ type ListedTool = {
 	inputSchema?: Record<string, unknown>;
 	description?: string;
 	annotations?: { title?: string };
+	_meta?: { ui?: { resourceUri?: string } };
 };
 
 async function listServerTools(
@@ -179,6 +181,7 @@ export async function getOpenAiToolsForMcp(
 					fnName: plainName,
 					server: server.name,
 					tool: toolName,
+					uiResourceUri: tool._meta?.ui?.resourceUri,
 				};
 			}
 		} else {
