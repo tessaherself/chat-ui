@@ -2,7 +2,8 @@
 	import "../styles/main.css";
 
 	import { onDestroy, onMount, untrack } from "svelte";
-	import { goto } from "$app/navigation";
+	import { goto, invalidateAll } from "$app/navigation";
+	import { setTheme } from "$lib/switchTheme";
 	import { base } from "$app/paths";
 	import { page } from "$app/state";
 
@@ -129,6 +130,46 @@
 	});
 
 	onMount(async () => {
+		setTheme("light");
+
+		// Iframe model switch bridge: parent can switch model in current conversation
+		async function handleParentMessage(event: MessageEvent) {
+			if (!event.data || event.data.type !== "xp:switchModel" || typeof event.data.modelId !== "string") {
+				return;
+			}
+
+			const { modelId } = event.data;
+
+			try {
+				await settings.instantSet({ activeModel: modelId });
+
+				// If inside a conversation, switch the model in-place via PATCH
+				const convMatch = page.url.pathname.match(/\/conversation\/([^/]+)/);
+				if (convMatch) {
+					const convId = convMatch[1];
+					const res = await fetch(`${base}/conversation/${convId}`, {
+						method: "PATCH",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ model: modelId }),
+					});
+					if (res.ok) {
+						await invalidateAll();
+					}
+				}
+
+				if (event.source) {
+					(event.source as WindowProxy).postMessage(
+						{ type: "xp:switchModelAck", modelId },
+						event.origin || "*"
+					);
+				}
+			} catch (err) {
+				console.error("Could not switch model from parent message", err);
+			}
+		}
+
+		window.addEventListener("message", handleParentMessage);
+
 		if (publicConfig.isHuggingChat && data.user?.username) {
 			fetch(`https://huggingface.co/api/users/${data.user.username}/overview`)
 				.then((res) => res.json())
@@ -182,7 +223,10 @@
 		};
 
 		window.addEventListener("keydown", onKeydown, { capture: true });
-		onDestroy(() => window.removeEventListener("keydown", onKeydown, { capture: true }));
+		return () => {
+			window.removeEventListener("keydown", onKeydown, { capture: true });
+			window.removeEventListener("message", handleParentMessage);
+		};
 	});
 
 	let mobileNavTitle = $derived(
