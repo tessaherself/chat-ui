@@ -8,6 +8,7 @@ node_modules/
 .svelte-kit/
 .env*
 !.env
+!.env.prod
 .env.local
 db
 models/**
