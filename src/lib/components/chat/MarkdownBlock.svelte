@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Token } from "$lib/utils/marked";
 	import CodeBlock from "../CodeBlock.svelte";
+	import MermaidDiagram from "./MermaidDiagram.svelte";
 
 	interface Props {
 		tokens: Token[];
@@ -17,6 +18,8 @@
 	{#if token.type === "text"}
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 		{@html token.html}
+	{:else if token.type === "code" && token.lang === "mermaid"}
+		<MermaidDiagram code={token.rawCode} loading={loading && !token.isClosed} />
 	{:else if token.type === "code"}
 		<CodeBlock code={token.code} rawCode={token.rawCode} loading={loading && !token.isClosed} />
 	{/if}
