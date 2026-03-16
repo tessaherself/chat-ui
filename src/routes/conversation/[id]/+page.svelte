@@ -29,7 +29,12 @@
 	import SubscribeModal from "$lib/components/SubscribeModal.svelte";
 	import { loading } from "$lib/stores/loading.js";
 	import { streamStart } from "$lib/utils/haptics";
-	import { requireAuthUser } from "$lib/utils/auth.js";
+	import {
+		isAuthFailureMessage,
+		requireAuthUser,
+		resetAuthRecoveryState,
+		triggerAuthRecovery,
+	} from "$lib/utils/auth.js";
 	import { isConversationGenerationActive } from "$lib/utils/generationState";
 
 	let { data = $bindable() } = $props();
@@ -378,6 +383,14 @@
 					update.type === MessageUpdateType.Status &&
 					update.status === MessageUpdateStatus.Error
 				) {
+					// Trigger auth recovery for 401 or auth-related error messages
+					if (update.statusCode === 401 || isAuthFailureMessage(update.message)) {
+						await triggerAuthRecovery({
+							basePath: base,
+							reason: "stream_status_401",
+						});
+						return;
+					}
 					// Check if this is a 402 payment required error
 					if (update.statusCode === 402) {
 						showSubscribeModal = true;
@@ -416,6 +429,12 @@
 				$error = "Too much traffic, please try again.";
 			} else if (err instanceof Error && err.message.includes("429")) {
 				$error = ERROR_MESSAGES.rateLimited;
+			} else if (err instanceof Error && isAuthFailureMessage(err.message)) {
+				await triggerAuthRecovery({
+					basePath: base,
+					reason: "fetch_or_stream_401",
+				});
+				return;
 			} else if (err instanceof Error) {
 				$error = err.message;
 			} else {
@@ -465,6 +484,11 @@
 	}
 
 	onMount(async () => {
+		// Clear auth recovery state on successful page load with valid session
+		if (page.data.user) {
+			resetAuthRecoveryState();
+		}
+
 		if ($pendingMessage) {
 			files = $pendingMessage.files;
 			await writeMessage({ prompt: $pendingMessage.content });

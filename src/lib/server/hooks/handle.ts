@@ -86,10 +86,12 @@ export async function handleRequest({ event, resolve }: HandleInput): Promise<Re
 
 			if (loginEnabled && !auth.user && !event.url.pathname.startsWith(`${base}/.well-known/`)) {
 				if (config.AUTOMATIC_LOGIN === "true") {
-					// AUTOMATIC_LOGIN: always redirect to OAuth flow (unless already on login or healthcheck pages)
+					// AUTOMATIC_LOGIN: redirect page requests to OAuth, but let API callers
+					// observe normal JSON/HTTP responses instead of triggering parallel login flows.
 					if (
 						!event.url.pathname.startsWith(`${base}/login`) &&
-						!event.url.pathname.startsWith(`${base}/healthcheck`)
+						!event.url.pathname.startsWith(`${base}/healthcheck`) &&
+						!event.url.pathname.startsWith(`${base}/api`)
 					) {
 						// To get the same CSRF token after callback
 						refreshSessionCookie(event.cookies, auth.secretSessionId);
