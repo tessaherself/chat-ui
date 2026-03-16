@@ -5,15 +5,27 @@
 
 	interface Props {
 		classNames?: string;
+		variant?: "default" | "nav";
 	}
 
-	let { classNames = "" }: Props = $props();
+	let { classNames = "", variant = "default" }: Props = $props();
+
+	let logoSrc = $derived(
+		variant === "nav"
+			? (publicConfig.PUBLIC_APP_LOGO_NAV_URL || `${publicConfig.assetPath}/logo.svg`)
+			: (publicConfig.PUBLIC_APP_LOGO_URL || `${publicConfig.assetPath}/logo.svg`)
+	);
+
+	let logoStyle = $derived(
+		variant === "nav"
+			? (publicConfig.PUBLIC_APP_LOGO_NAV_STYLE || "height: 1.5em; width: auto;")
+			: (publicConfig.PUBLIC_APP_LOGO_STYLE || "")
+	);
 </script>
 
 <img
-	width="32"
-	height="32"
 	class={classNames}
+	style={logoStyle}
 	alt="{publicConfig.PUBLIC_APP_NAME} logo"
-	src="{publicConfig.assetPath}/logo.svg"
+	src={logoSrc}
 />
