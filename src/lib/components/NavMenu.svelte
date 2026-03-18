@@ -152,7 +152,7 @@
 		onclick={handleNewChatClick}
 		class="flex rounded-lg border bg-white px-2 py-0.5 text-center shadow-sm hover:shadow-none dark:border-gray-600 dark:bg-gray-700 sm:text-smd"
 		style={isIframeMode
-			? "box-shadow: 0 6px 24px 0 rgba(40,90,105,0.26), 0 5px 8px 0 rgba(255,255,255,0.48) inset, 0 0 12px 0 rgba(255,255,255,0.20); border: 1.5px solid rgba(122, 159, 215, 0.4); background: transparent; backdrop-filter: blur(1px) saturate(80%); -webkit-backdrop-filter: blur(1px) saturate(80%); color: #555; font-size: 0.8rem; font-weight: 500; transition: box-shadow 0.18s, background 0.18s;"
+			? "transform: translateY(7px); margin-bottom: -30px; margin-right: 10px; box-shadow: 0 6px 24px 0 rgba(40,90,105,0.26), 0 5px 8px 0 rgba(255,255,255,0.48) inset, 0 0 12px 0 rgba(255,255,255,0.20); border: 1.5px solid rgba(122, 159, 215, 0.4); background: transparent; backdrop-filter: blur(1px) saturate(80%); -webkit-backdrop-filter: blur(1px) saturate(80%); color: #555; padding: 4px 8px; font-size: 0.8rem; font-weight: 500; transition: box-shadow 0.18s, background 0.18s;"
 			: ""}
 		title="Ctrl/Cmd + Shift + O"
 	>
