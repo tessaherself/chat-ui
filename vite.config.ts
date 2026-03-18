@@ -1,6 +1,6 @@
 import { sveltekit } from "@sveltejs/kit/vite";
 import Icons from "unplugin-icons/vite";
-import { promises } from "fs";
+import { promises, readFileSync } from "fs";
 import { defineConfig } from "vitest/config";
 import { config } from "dotenv";
 
@@ -8,6 +8,8 @@ import { config } from "dotenv";
 // This ensures env vars are available before config is evaluated
 config({ path: "./.env.local" });
 config({ path: "./.env" });
+
+const pkg = JSON.parse(readFileSync("./package.json", "utf-8"));
 
 // Vite automatically loads .env.{mode} and .env.{mode}.local based on --mode flag
 // But we need to load them here first for vars used in vite.config.ts itself
@@ -33,6 +35,9 @@ export default defineConfig({
 		}),
 		loadTTFAsArrayBuffer(),
 	],
+	define: {
+		__APP_VERSION__: JSON.stringify(pkg.version),
+	},
 	// Allow external access via ngrok tunnel host
 	server: {
 		port: process.env.PORT ? parseInt(process.env.PORT) : 5173,

@@ -87,6 +87,8 @@
 
 	const nModels: number = page.data.models.filter((el: Model) => !el.unlisted).length;
 
+	const isIframeMode = $derived(publicConfig.PUBLIC_SHOW_NAV_LOGO !== "true");
+
 	async function handleVisible() {
 		p++;
 		const newConvs = await client.conversations
@@ -131,9 +133,10 @@
 
 <div
 	class="sticky top-0 flex flex-none touch-none items-center justify-between px-1.5 max-sm:pt-0"
-	class:py-3.5={publicConfig.PUBLIC_SHOW_NAV_LOGO === "true"}
+	class:py-3.5={!isIframeMode}
+	class:py-2={isIframeMode}
 >
-	{#if publicConfig.PUBLIC_SHOW_NAV_LOGO === "true"}
+	{#if !isIframeMode}
 		<a
 			class="flex select-none items-center rounded-xl text-lg font-semibold"
 			href="{publicConfig.PUBLIC_ORIGIN}{base}/"
@@ -148,7 +151,7 @@
 		href={`${base}/`}
 		onclick={handleNewChatClick}
 		class="flex rounded-lg border bg-white px-2 py-0.5 text-center shadow-sm hover:shadow-none dark:border-gray-600 dark:bg-gray-700 sm:text-smd"
-		style={publicConfig.PUBLIC_SHOW_NAV_LOGO !== "true"
+		style={isIframeMode
 			? "transform: translateY(7px); margin-bottom: -30px; margin-right: 10px; box-shadow: 0 6px 24px 0 rgba(40,90,105,0.26), 0 5px 8px 0 rgba(255,255,255,0.48) inset, 0 0 12px 0 rgba(255,255,255,0.20); border: 1.5px solid rgba(122, 159, 215, 0.4); background: transparent; backdrop-filter: blur(1px) saturate(80%); -webkit-backdrop-filter: blur(1px) saturate(80%); color: #555; padding: 4px 8px; font-size: 0.8rem; font-weight: 500; transition: box-shadow 0.18s, background 0.18s;"
 			: ""}
 		title="Ctrl/Cmd + Shift + O"
@@ -159,7 +162,7 @@
 
 <div
 	class="scrollbar-custom flex touch-pan-y flex-col gap-1 overflow-y-auto rounded-r-xl border border-l-0 border-gray-100 from-gray-50 px-3 pb-3 pt-2 text-[.9rem] dark:border-transparent dark:from-gray-800/30 max-sm:bg-gradient-to-t md:bg-gradient-to-l"
-	style={publicConfig.PUBLIC_SHOW_NAV_LOGO !== "true"
+	style={isIframeMode
 		? "background: linear-gradient(190deg, rgba(30,30,255,0.1) 2%, rgba(0,100,255,0) 6%)"
 		: ""}
 >
@@ -186,11 +189,21 @@
 		<div
 			class="group flex h-9 items-center gap-1.5 rounded-lg pl-2.5 pr-2 hover:bg-gray-100 first:hover:bg-transparent dark:hover:bg-gray-700 first:dark:hover:bg-transparent"
 		>
-			<img
-				src="https://huggingface.co/api/users/{user.username}/avatar?redirect=true"
-				class="size-3.5 rounded-full border bg-gray-500 dark:border-white/40"
-				alt=""
-			/>
+			{#if user?.avatarUrl}
+				<img
+					src={user.avatarUrl}
+					class="size-3.5 rounded-full border bg-gray-500 dark:border-white/40"
+					alt=""
+				/>
+			{:else if publicConfig.isHuggingChat && user?.username}
+				<img
+					src="https://huggingface.co/api/users/{user.username}/avatar?redirect=true"
+					class="size-3.5 rounded-full border bg-gray-500 dark:border-white/40"
+					alt=""
+				/>
+			{:else}
+				<div class="size-3.5 rounded-full border bg-gray-500 dark:border-white/40"></div>
+			{/if}
 			<span
 				class="flex flex-none shrink items-center gap-1.5 truncate pr-2 text-gray-500 dark:text-gray-400"
 				>{user?.username || user?.email}</span
@@ -216,7 +229,7 @@
 			{/if}
 		</div>
 	{/if}
-	{#if publicConfig.PUBLIC_SHOW_NAV_LOGO === "true"}
+	{#if !isIframeMode}
 		<a
 			href="{base}/models"
 			class="flex h-9 flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
@@ -247,7 +260,7 @@
 	{/if}
 
 	<span class="flex gap-1">
-		{#if publicConfig.PUBLIC_SHOW_NAV_LOGO === "true"}
+		{#if !isIframeMode}
 			<a
 				href="{base}/settings/application"
 				class="flex h-9 flex-none flex-grow items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"

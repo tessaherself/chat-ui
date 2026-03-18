@@ -2,7 +2,8 @@
 	import "../styles/main.css";
 
 	import { onDestroy, onMount, untrack } from "svelte";
-	import { goto } from "$app/navigation";
+	import { goto, invalidateAll } from "$app/navigation";
+	import { setTheme } from "$lib/switchTheme";
 	import { base } from "$app/paths";
 	import { page } from "$app/state";
 
@@ -15,7 +16,6 @@
 	import NavMenu from "$lib/components/NavMenu.svelte";
 	import MobileNav from "$lib/components/MobileNav.svelte";
 	import titleUpdate from "$lib/stores/titleUpdate";
-	import WelcomeModal from "$lib/components/WelcomeModal.svelte";
 	import ExpandNavigation from "$lib/components/ExpandNavigation.svelte";
 	import { setContext } from "svelte";
 	import { handleResponse, useAPIClient } from "$lib/APIClient";
@@ -97,11 +97,6 @@
 			});
 	}
 
-	function closeWelcomeModal() {
-		if (requireAuthUser()) return;
-		settings.set({ welcomeModalSeen: true });
-	}
-
 	onDestroy(() => {
 		clearTimeout(errorToastTimeout);
 	});
@@ -128,28 +123,51 @@
 		setHapticsEnabled($settings.hapticsEnabled);
 	});
 
+	const APP_VERSION = __APP_VERSION__;
+
 	onMount(async () => {
-		// Iframe model switch bridge: parent app can send { type: "xp:switchModel", modelId }
+		console.log(`%c[ChatUI] v${APP_VERSION}`, "color: #06b6d4; font-weight: bold;");
+		if (window.parent !== window) {
+			window.parent.postMessage({ type: "chatui:ready", version: APP_VERSION }, "*");
+		}
+		setTheme("light");
+
+		// Iframe model switch bridge: parent can switch model in current conversation
 		async function handleParentMessage(event: MessageEvent) {
 			if (!event.data || event.data.type !== "xp:switchModel" || typeof event.data.modelId !== "string") {
 				return;
 			}
+
 			const { modelId } = event.data;
+
 			try {
 				await settings.instantSet({ activeModel: modelId });
-				if (page.url.pathname.includes("/conversation/")) {
-					await goto(`${base}/`, { invalidateAll: false });
+
+				// If inside a conversation, switch the model in-place via PATCH
+				const convMatch = page.url.pathname.match(/\/conversation\/([^/]+)/);
+				if (convMatch) {
+					const convId = convMatch[1];
+					const res = await fetch(`${base}/conversation/${convId}`, {
+						method: "PATCH",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ model: modelId }),
+					});
+					if (res.ok) {
+						await invalidateAll();
+					}
 				}
+
 				if (event.source) {
 					(event.source as WindowProxy).postMessage(
 						{ type: "xp:switchModelAck", modelId },
-						event.origin || window.location.origin
+						event.origin || "*"
 					);
 				}
 			} catch (err) {
 				console.error("Could not switch model from parent message", err);
 			}
 		}
+
 		window.addEventListener("message", handleParentMessage);
 
 		if (publicConfig.isHuggingChat && data.user?.username) {
@@ -205,10 +223,10 @@
 		};
 
 		window.addEventListener("keydown", onKeydown, { capture: true });
-		onDestroy(() => {
+		return () => {
 			window.removeEventListener("keydown", onKeydown, { capture: true });
 			window.removeEventListener("message", handleParentMessage);
-		});
+		};
 	});
 
 	let mobileNavTitle = $derived(
@@ -217,11 +235,6 @@
 			: conversations.find((conv) => conv.id === page.params.id)?.title
 	);
 
-	// Show the welcome modal once on first app load
-	let showWelcome = $derived(
-		!$settings.welcomeModalSeen &&
-			!(page.data.shared === true && page.route.id?.startsWith("/conversation/"))
-	);
 </script>
 
 <svelte:head>
@@ -277,10 +290,6 @@
 		<meta name="apple-itunes-app" content={`app-id=${publicConfig.PUBLIC_APPLE_APP_ID}`} />
 	{/if}
 </svelte:head>
-
-{#if showWelcome}
-	<WelcomeModal close={closeWelcomeModal} />
-{/if}
 
 <BackgroundGenerationPoller />
 
