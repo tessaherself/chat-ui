@@ -52,6 +52,8 @@ pipelines:
               COOKIE_SECURE=true
               COOKIE_SAMESITE=lax
               HF_ORG_ADMIN=xpartners-admins
+              TRANSCRIPTION_MODEL=$TRANSCRIPTION_MODEL
+              TRANSCRIPTION_BASE_URL=$TRANSCRIPTION_BASE_URL
               EOF
 
             - echo "Contents of .env.prod:"
